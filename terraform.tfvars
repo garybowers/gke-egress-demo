@@ -1,4 +1,5 @@
 prefix          = "gke-poc"
-billing_account = ""
-folder_id       = ""
+billing_account = "01504C-A2522F-2110FA"
+folder_id       = "folders/879011168459"
 region          = "europe-west1"
+master_ipv4_cidr_block = "172.16.0.0/28"

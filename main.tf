@@ -23,6 +23,7 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "storage-component.googleapis.com",
     "container.googleapis.com",
+    "containerregistry.googleapis.com",
   ]
   subnets = [
     {
@@ -107,13 +108,13 @@ resource "google_compute_router_nat" "nat_gateway" {
   router = google_compute_router.nat_router.name
   region = google_compute_router.nat_router.region
 
-  nat_ip_allocate_option              = "MANUAL_ONLY"
-  nat_ips                             = [google_compute_address.nat_gw_address.self_link]
+  nat_ip_allocate_option             = "MANUAL_ONLY"
+  nat_ips                            = [google_compute_address.nat_gw_address.self_link]
   source_subnetwork_ip_ranges_to_nat = "LIST_OF_SUBNETWORKS"
 
 
   subnetwork {
-    name                    = google_compute_subnetwork.subnet.0.name
+    name                    = google_compute_subnetwork.subnet.1.name
     source_ip_ranges_to_nat = ["ALL_IP_RANGES"]
   }
 
