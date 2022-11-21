@@ -56,7 +56,7 @@ resource "google_project_iam_member" "service_account_monitoring_viewer" {
 // Create the firewall rules to allow nodes to communicate with the master
 resource "google_compute_firewall" "egress-allow-gke-node" {
   project = google_project.project.project_id
-  network = google_compute_network.vpc-main.self_link 
+  network = google_compute_network.vpc-main.self_link
 
   name = "${var.prefix}-gke-node-allow-egress-${random_id.postfix.hex}"
 
@@ -74,7 +74,7 @@ resource "google_compute_firewall" "egress-allow-gke-node" {
 
 resource "google_compute_firewall" "ingress-allow-gke-node" {
   project = google_project.project.project_id
-  network = google_compute_network.vpc-main.self_link 
+  network = google_compute_network.vpc-main.self_link
 
   name = "${var.prefix}-gke-node-allow-ingress-${random_id.postfix.hex}"
 
@@ -94,17 +94,17 @@ resource "google_compute_firewall" "ingress-allow-gke-node" {
 resource "google_container_cluster" "gke" {
   provider = google-beta
 
-  project  = google_project.project.project_id 
+  project  = google_project.project.project_id
   name     = "${var.prefix}-${random_id.postfix.hex}"
   location = var.region
 
-  network = google_compute_network.vpc-main.self_link 
-  subnetwork = google_compute_subnetwork.subnet.1.self_link 
+  network    = google_compute_network.vpc-main.self_link
+  subnetwork = google_compute_subnetwork.subnet.1.self_link
 
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
 
-  min_master_version = "1.24.5" 
+  min_master_version = "1.24.5"
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -147,7 +147,7 @@ resource "google_container_cluster" "gke" {
   }
 
   private_cluster_config {
-    enable_private_endpoint = true 
+    enable_private_endpoint = true
     enable_private_nodes    = true
     master_ipv4_cidr_block  = var.master_ipv4_cidr_block
   }
@@ -182,4 +182,127 @@ resource "google_container_cluster" "gke" {
   }
 
   depends_on = [google_compute_firewall.egress-allow-gke-node, google_compute_firewall.ingress-allow-gke-node]
+}
+
+resource "google_container_node_pool" "np-ext" {
+  project     = google_project.project.project_id
+  name_prefix = "${var.prefix}-np-ext"
+  location    = var.region
+  cluster     = google_container_cluster.gke.name
+
+  node_config {
+    image_type   = "COS_CONTAINERD"
+    machine_type = "n1-standard-2"
+
+    disk_size_gb = 100
+    disk_type    = "pd-balanced"
+
+    preemptible = false
+
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+
+    labels = {
+      private-pool = "true"
+    }
+
+    shielded_instance_config {
+      enable_secure_boot          = "true"
+      enable_integrity_monitoring = "true"
+    }
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    service_account = google_service_account.service_account.email
+
+    tags = ["egress-allow"]
+  }
+
+  initial_node_count = 1
+
+  autoscaling {
+    min_node_count  = 1
+    max_node_count  = 5
+    location_policy = "BALANCED"
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
+
+  timeouts {
+    create = "30m"
+    update = "40m"
+    delete = "2h"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+}
+
+// Workload nodepool
+resource "google_container_node_pool" "np-int" {
+  project     = google_project.project.project_id
+  name_prefix = "${var.prefix}-np-wl1"
+  location    = var.region
+  cluster     = google_container_cluster.gke.name
+
+  node_config {
+    image_type   = "COS_CONTAINERD"
+    machine_type = "n1-standard-2"
+
+    disk_size_gb = 100
+    disk_type    = "pd-balanced"
+
+    preemptible = false
+
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+
+    labels = {
+      private-pool = "true"
+    }
+
+    shielded_instance_config {
+      enable_secure_boot          = "true"
+      enable_integrity_monitoring = "true"
+    }
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+
+    service_account = google_service_account.service_account.email
+  }
+
+  initial_node_count = 1
+
+  autoscaling {
+    min_node_count  = 1
+    max_node_count  = 5
+    location_policy = "BALANCED"
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
+
+  timeouts {
+    create = "30m"
+    update = "40m"
+    delete = "2h"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
