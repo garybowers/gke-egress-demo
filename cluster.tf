@@ -204,7 +204,8 @@ resource "google_container_node_pool" "np-ext" {
     }
 
     labels = {
-      private-pool = "true"
+      private-pool = "true",
+      type         = "egress"
     }
 
     shielded_instance_config {
