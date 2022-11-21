@@ -111,6 +111,10 @@ resource "google_container_cluster" "gke" {
   enable_shielded_nodes    = true
   enable_legacy_abac       = false
 
+  resource_labels = {
+    mesh_id = "proj-${google_project.project.number}",
+  }
+
   master_auth {
     // Disable login auth to the cluster
     //username = ""

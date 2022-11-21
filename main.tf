@@ -24,6 +24,8 @@ locals {
     "storage-component.googleapis.com",
     "container.googleapis.com",
     "containerregistry.googleapis.com",
+    "gkehub.googleapis.com",
+    "mesh.googleapis.com",
   ]
   subnets = [
     {
