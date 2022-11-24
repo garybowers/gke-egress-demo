@@ -47,5 +47,5 @@ resource "google_compute_firewall" "egress-allow-ext-gw" {
 
   destination_ranges = ["0.0.0.0/0"]
 
-  source_service_accounts = [google_service_account.gke_egress_service_account.email]
+  target_service_accounts = [google_service_account.gke_egress_service_account.email]
 }

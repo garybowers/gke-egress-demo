@@ -80,7 +80,7 @@ resource "google_compute_firewall" "ingress-allow-gke-hc" {
     protocol = "tcp"
   }
 
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
 }
 
 // Create the firewall rules to allow nodes to communicate with the control plane
@@ -99,8 +99,11 @@ resource "google_compute_firewall" "egress-allow-gke-node" {
   }
 
   destination_ranges = [var.master_ipv4_cidr_block]
-  target_service_accounts = [google_service_account.gke_worker_service_account.email,
-  google_service_account.gke_egress_service_account.email]
+  target_service_accounts = [
+    google_service_account.gke_worker_service_account.email,
+    google_service_account.gke_egress_service_account.email,
+    google_service_account.gke_service_account.email
+  ]
 }
 
 resource "google_compute_firewall" "ingress-allow-gke-node" {
