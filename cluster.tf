@@ -18,10 +18,22 @@ resource "random_id" "postfix" {
   byte_length = 4
 }
 
-resource "google_service_account" "service_account" {
+resource "google_service_account" "gke_service_account" {
   project      = google_project.project.project_id
   account_id   = "${var.prefix}-gke-${random_id.postfix.hex}"
   display_name = "${var.prefix}-gke-${random_id.postfix.hex}"
+}
+
+resource "google_service_account" "gke_egress_service_account" {
+  project      = google_project.project.project_id
+  account_id   = "${var.prefix}-gke-egress-${random_id.postfix.hex}"
+  display_name = "${var.prefix}-gke-egress-${random_id.postfix.hex}"
+}
+
+resource "google_service_account" "gke_worker_service_account" {
+  project      = google_project.project.project_id
+  account_id   = "${var.prefix}-gke-worker-${random_id.postfix.hex}"
+  display_name = "${var.prefix}-gke-worker-${random_id.postfix.hex}"
 }
 
 resource "google_container_registry" "registry" {
@@ -31,29 +43,47 @@ resource "google_container_registry" "registry" {
 resource "google_storage_bucket_iam_member" "viewer" {
   bucket = google_container_registry.registry.id
   role   = "roles/storage.objectViewer"
-  member = "serviceAccount:${google_service_account.service_account.email}"
+  member = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "google_project_iam_member" "service_account_log_writer" {
   project = google_project.project.project_id
   role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
+  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "google_project_iam_member" "service_account_metric_writer" {
   project = google_project.project.project_id
   role    = "roles/monitoring.metricWriter"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
+  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "google_project_iam_member" "service_account_monitoring_viewer" {
   project = google_project.project.project_id
   role    = "roles/monitoring.viewer"
-  member  = "serviceAccount:${google_service_account.service_account.email}"
+  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 
-// Create the firewall rules to allow nodes to communicate with the master
+// Create the firewall rules to allow health checks
+
+resource "google_compute_firewall" "ingress-allow-gke-hc" {
+  project = google_project.project.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-gke-node-allow-ingress-hc-${random_id.postfix.hex}"
+
+  priority  = "100"
+  direction = "INGRESS"
+
+  allow {
+    protocol = "tcp"
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+}
+
+// Create the firewall rules to allow nodes to communicate with the control plane
 resource "google_compute_firewall" "egress-allow-gke-node" {
   project = google_project.project.project_id
   network = google_compute_network.vpc-main.self_link
@@ -68,8 +98,9 @@ resource "google_compute_firewall" "egress-allow-gke-node" {
     ports    = ["443", "9443", "10250", "15017", "6443"]
   }
 
-  destination_ranges      = [var.master_ipv4_cidr_block]
-  target_service_accounts = [google_service_account.service_account.email]
+  destination_ranges = [var.master_ipv4_cidr_block]
+  target_service_accounts = [google_service_account.gke_worker_service_account.email,
+  google_service_account.gke_egress_service_account.email]
 }
 
 resource "google_compute_firewall" "ingress-allow-gke-node" {
@@ -86,8 +117,11 @@ resource "google_compute_firewall" "ingress-allow-gke-node" {
     ports    = ["443", "9443", "10250", "15017", "6443"]
   }
 
-  source_ranges           = [var.master_ipv4_cidr_block]
-  source_service_accounts = [google_service_account.service_account.email]
+  source_ranges = [var.master_ipv4_cidr_block]
+  source_service_accounts = [
+    google_service_account.gke_worker_service_account.email,
+    google_service_account.gke_egress_service_account.email
+  ]
 }
 
 // Create the GKE Cluster
@@ -99,7 +133,7 @@ resource "google_container_cluster" "gke" {
   location = var.region
 
   network    = google_compute_network.vpc-main.self_link
-  subnetwork = google_compute_subnetwork.subnet.1.self_link
+  subnetwork = google_compute_subnetwork.subnet.0.self_link
 
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
@@ -143,7 +177,7 @@ resource "google_container_cluster" "gke" {
 
     preemptible = false
 
-    service_account = google_service_account.service_account.email
+    service_account = google_service_account.gke_service_account.email
   }
 
   workload_identity_config {
@@ -221,9 +255,7 @@ resource "google_container_node_pool" "np-ext" {
       "https://www.googleapis.com/auth/cloud-platform"
     ]
 
-    service_account = google_service_account.service_account.email
-
-    tags = ["egress-allow"]
+    service_account = google_service_account.gke_egress_service_account.email
   }
 
   initial_node_count = 1
@@ -284,7 +316,7 @@ resource "google_container_node_pool" "np-int" {
       "https://www.googleapis.com/auth/cloud-platform"
     ]
 
-    service_account = google_service_account.service_account.email
+    service_account = google_service_account.gke_worker_service_account.email
   }
 
   initial_node_count = 1

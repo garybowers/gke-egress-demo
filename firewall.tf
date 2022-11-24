@@ -29,8 +29,7 @@ resource "google_compute_firewall" "egress-disallow-all" {
     protocol = "all"
   }
 
-  destination_ranges      = ["0.0.0.0/0"]
-  target_service_accounts = [google_service_account.service_account.email]
+  destination_ranges = ["0.0.0.0/0"]
 }
 
 resource "google_compute_firewall" "egress-allow-ext-gw" {
@@ -48,5 +47,5 @@ resource "google_compute_firewall" "egress-allow-ext-gw" {
 
   destination_ranges = ["0.0.0.0/0"]
 
-  target_tags = ["egress-allow"]
+  source_service_accounts = [google_service_account.gke_egress_service_account.email]
 }
