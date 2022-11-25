@@ -207,11 +207,11 @@ resource "google_container_cluster" "gke" {
   depends_on = [google_compute_firewall.egress-allow-gke-cp, google_compute_firewall.ingress-allow-gke-cp]
 }
 
-resource "google_container_node_pool" "np-ext" {
-  project     = local.project_id
-  name_prefix = "${var.prefix}-np-ext"
-  location    = var.region
-  cluster     = google_container_cluster.gke.name
+resource "google_container_node_pool" "gateway" {
+  project  = local.project_id
+  name     = "${var.prefix}-np-gateway"
+  location = var.region
+  cluster  = google_container_cluster.gke.name
 
   node_config {
     image_type   = "COS_CONTAINERD"
@@ -270,10 +270,10 @@ resource "google_container_node_pool" "np-ext" {
 
 // Workload nodepool
 resource "google_container_node_pool" "np-int" {
-  project     = local.project_id
-  name_prefix = "${var.prefix}-np-wl"
-  location    = var.region
-  cluster     = google_container_cluster.gke.name
+  project  = local.project_id
+  name     = "${var.prefix}-workload"
+  location = var.region
+  cluster  = google_container_cluster.gke.name
 
   node_config {
     image_type   = "COS_CONTAINERD"

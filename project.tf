@@ -59,3 +59,11 @@ resource "google_project_service" "project_apis" {
   disable_dependent_services = true
   disable_on_destroy         = false
 }
+
+resource "google_compute_project_metadata" "default" {
+  project = local.project_id
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+}
+

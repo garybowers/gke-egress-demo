@@ -48,7 +48,10 @@ resource "google_compute_firewall" "egress-allow-ext-gw" {
 
   destination_ranges = ["0.0.0.0/0"]
 
-  target_service_accounts = [google_service_account.gke_egress_service_account.email]
+  target_service_accounts = [
+    google_service_account.gke_egress_service_account.email,
+    google_service_account.deploy_service_account.email,
+  ]
 }
 
 resource "google_compute_firewall" "egress-allow-ext-pga" {
@@ -101,4 +104,18 @@ resource "google_compute_firewall" "ingress-allow-gke-hc" {
   }
 
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+}
+
+resource "google_compute_firewall" "ingress-allow-iap" {
+  project = local.project_id
+  name    = "${var.prefix}-ingress-allow-iap"
+  network = google_compute_network.vpc-main.name
+
+  priority = 200
+
+  allow {
+    protocol = "tcp"
+  }
+
+  source_ranges = ["35.235.240.0/20"]
 }

@@ -22,6 +22,9 @@ resource "google_gke_hub_membership" "membership" {
       resource_link = "//container.googleapis.com/${google_container_cluster.gke.id}"
     }
   }
+  authority {
+    issuer = "https://container.googleapis.com/v1/${google_container_cluster.gke.id}"
+  }
 }
 
 resource "google_gke_hub_feature" "mesh" {
