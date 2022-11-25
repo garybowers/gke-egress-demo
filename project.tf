@@ -26,6 +26,7 @@ locals {
     "containerregistry.googleapis.com",
     "gkehub.googleapis.com",
     "mesh.googleapis.com",
+    "meshconfig.googleapis.com",
     "anthos.googleapis.com",
     "containerregistry.googleapis.com",
   ]
