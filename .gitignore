@@ -2,3 +2,5 @@
 *.tfstate.*
 **/.terraform/*
 .terraform.lock.hcl
+asm_kubeconfig
+asm-custom-install.yaml

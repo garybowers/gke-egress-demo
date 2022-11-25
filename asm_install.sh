@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+PROJECT_ID=$1
+CLUSTER_NAME=$2
+CLUSTER_LOCATION=$3
+
+gcloud container fleet memberships get-credentials basic --project $PROJECT_ID
 
 kubectl create ns istio-system
 kubectl create ns istio-egress
@@ -51,8 +56,8 @@ chmod +x asmcli
 
 ./asmcli install \
     --project_id ${PROJECT_ID} \
-    --cluster_name cluster1 \
-    --cluster_location ${ZONE} \
+    --cluster_name ${CLUSTER_NAME} \
+    --cluster_location ${CLUSTER_LOCATION} \
     --custom_overlay ./asm-custom-install.yaml \
     --output_dir ./ \
     --enable_all
