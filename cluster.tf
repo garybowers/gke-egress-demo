@@ -64,27 +64,8 @@ resource "google_project_iam_member" "service_account_monitoring_viewer" {
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
-
-// Create the firewall rules to allow health checks
-
-resource "google_compute_firewall" "ingress-allow-gke-hc" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-ingress-hc-${random_id.postfix.hex}"
-
-  priority  = "100"
-  direction = "INGRESS"
-
-  allow {
-    protocol = "tcp"
-  }
-
-  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
-}
-
 // Create the firewall rules to allow nodes to communicate with the control plane
-resource "google_compute_firewall" "egress-allow-gke-node" {
+resource "google_compute_firewall" "egress-allow-gke-cp" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
@@ -106,7 +87,7 @@ resource "google_compute_firewall" "egress-allow-gke-node" {
   ]
 }
 
-resource "google_compute_firewall" "ingress-allow-gke-node" {
+resource "google_compute_firewall" "ingress-allow-gke-cp" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
@@ -123,7 +104,8 @@ resource "google_compute_firewall" "ingress-allow-gke-node" {
   source_ranges = [var.master_ipv4_cidr_block]
   source_service_accounts = [
     google_service_account.gke_worker_service_account.email,
-    google_service_account.gke_egress_service_account.email
+    google_service_account.gke_egress_service_account.email,
+    google_service_account.gke_service_account.email
   ]
 }
 
@@ -149,7 +131,7 @@ resource "google_container_cluster" "gke" {
   enable_legacy_abac       = false
 
   resource_labels = {
-    mesh_id = "proj-${local.number}",
+    mesh_id = "proj-${local.project_number}",
   }
 
   master_auth {
@@ -222,7 +204,7 @@ resource "google_container_cluster" "gke" {
     delete = "2h"
   }
 
-  depends_on = [google_compute_firewall.egress-allow-gke-node, google_compute_firewall.ingress-allow-gke-node]
+  depends_on = [google_compute_firewall.egress-allow-gke-cp, google_compute_firewall.ingress-allow-gke-cp]
 }
 
 resource "google_container_node_pool" "np-ext" {
@@ -289,7 +271,7 @@ resource "google_container_node_pool" "np-ext" {
 // Workload nodepool
 resource "google_container_node_pool" "np-int" {
   project     = local.project_id
-  name_prefix = "${var.prefix}-np-wl1"
+  name_prefix = "${var.prefix}-np-wl"
   location    = var.region
   cluster     = google_container_cluster.gke.name
 

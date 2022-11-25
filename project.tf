@@ -27,7 +27,8 @@ locals {
     "gkehub.googleapis.com",
     "mesh.googleapis.com",
   ]
-  project_id = google_project.project.project_id
+  project_id     = google_project.project.project_id
+  project_number = google_project.project.number
 }
 
 resource "random_integer" "salt" {

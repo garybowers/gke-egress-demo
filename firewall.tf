@@ -49,3 +49,19 @@ resource "google_compute_firewall" "egress-allow-ext-gw" {
 
   target_service_accounts = [google_service_account.gke_egress_service_account.email]
 }
+
+resource "google_compute_firewall" "egress-allow-ext-pga" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-gke-node-allow-pga-egress-${random_id.postfix.hex}"
+
+  priority  = "1000"
+  direction = "EGRESS"
+
+  allow {
+    protocol = "all"
+  }
+
+  destination_ranges = ["199.36.153.8/30"]
+}
