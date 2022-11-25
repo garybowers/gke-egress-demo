@@ -15,7 +15,7 @@
  */
 
 // Create a deny-all catch all firewall rule.
-
+/*
 resource "google_compute_firewall" "egress-disallow-all" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
@@ -31,6 +31,7 @@ resource "google_compute_firewall" "egress-disallow-all" {
 
   destination_ranges = ["0.0.0.0/0"]
 }
+*/
 
 resource "google_compute_firewall" "egress-allow-ext-gw" {
   project = local.project_id
@@ -56,7 +57,7 @@ resource "google_compute_firewall" "egress-allow-ext-pga" {
 
   name = "${var.prefix}-gke-node-allow-pga-egress-${random_id.postfix.hex}"
 
-  priority  = "1000"
+  priority  = "300"
   direction = "EGRESS"
 
   allow {

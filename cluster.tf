@@ -76,7 +76,7 @@ resource "google_compute_firewall" "egress-allow-gke-cp" {
 
   allow {
     protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443"]
+    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
   }
 
   destination_ranges = [var.master_ipv4_cidr_block]
@@ -98,7 +98,7 @@ resource "google_compute_firewall" "ingress-allow-gke-cp" {
 
   allow {
     protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443"]
+    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
   }
 
   source_ranges = [var.master_ipv4_cidr_block]
@@ -162,7 +162,7 @@ resource "google_container_cluster" "gke" {
 
     preemptible = false
 
-    service_account = google_service_account.gke_service_account.email
+    service_account = google_service_account.gke_worker_service_account.email
   }
 
   workload_identity_config {
@@ -195,7 +195,7 @@ resource "google_container_cluster" "gke" {
   //resource_labels = var.cluster_labels
 
   lifecycle {
-    ignore_changes = [master_auth]
+    ignore_changes = [master_auth, node_config[0]]
   }
 
   timeouts {
