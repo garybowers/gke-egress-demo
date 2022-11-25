@@ -199,7 +199,7 @@ resource "google_container_cluster" "gke" {
   }
 
   timeouts {
-    create = "30m"
+    create = "15m"
     update = "40m"
     delete = "2h"
   }
@@ -257,7 +257,7 @@ resource "google_container_node_pool" "np-ext" {
   }
 
   timeouts {
-    create = "30m"
+    create = "15m"
     update = "40m"
     delete = "2h"
   }
@@ -318,7 +318,7 @@ resource "google_container_node_pool" "np-int" {
   }
 
   timeouts {
-    create = "30m"
+    create = "15m"
     update = "40m"
     delete = "2h"
   }
