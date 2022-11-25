@@ -65,3 +65,20 @@ resource "google_compute_firewall" "egress-allow-ext-pga" {
 
   destination_ranges = ["199.36.153.8/30"]
 }
+
+// Create the firewall rules to allow health checks
+resource "google_compute_firewall" "ingress-allow-gke-hc" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-allow-ingress-hc-${random_id.postfix.hex}"
+
+  priority  = "100"
+  direction = "INGRESS"
+
+  allow {
+    protocol = "tcp"
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22", "209.85.152.0/22", "209.85.204.0/22"]
+}
