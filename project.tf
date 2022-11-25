@@ -27,6 +27,7 @@ locals {
     "gkehub.googleapis.com",
     "mesh.googleapis.com",
     "anthos.googleapis.com",
+    "containerregistry.googleapis.com",
   ]
   project_id     = google_project.project.project_id
   project_number = google_project.project.number

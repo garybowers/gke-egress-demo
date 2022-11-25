@@ -15,7 +15,7 @@
  */
 
 // Create a deny-all catch all firewall rule.
-/*
+
 resource "google_compute_firewall" "egress-disallow-all" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
@@ -31,7 +31,7 @@ resource "google_compute_firewall" "egress-disallow-all" {
 
   destination_ranges = ["0.0.0.0/0"]
 }
-*/
+
 
 resource "google_compute_firewall" "egress-allow-ext-gw" {
   project = local.project_id
@@ -65,6 +65,25 @@ resource "google_compute_firewall" "egress-allow-ext-pga" {
   }
 
   destination_ranges = ["199.36.153.8/30"]
+}
+
+data "google_netblock_ip_ranges" "netblock" {
+}
+
+resource "google_compute_firewall" "egress-allow-gke-googleapis" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-gke-node-allow-engress-googleapis-${random_id.postfix.hex}"
+
+  priority  = "100"
+  direction = "EGRESS"
+
+  allow {
+    protocol = "tcp"
+  }
+
+  destination_ranges = data.google_netblock_ip_ranges.netblock.cidr_blocks_ipv4
 }
 
 // Create the firewall rules to allow health checks

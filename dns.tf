@@ -56,3 +56,46 @@ resource "google_dns_record_set" "private-google-apis-a" {
     "199.36.153.11"
   ]
 }
+
+resource "google_dns_managed_zone" "private-gcr" {
+  project     = local.project_id
+  name        = "private-gcr-io"
+  dns_name    = "gcr.io."
+  description = "Private DNS zone for Container Registry"
+  visibility  = "private"
+
+  private_visibility_config {
+    networks {
+      network_url = google_compute_network.vpc-main.id
+    }
+  }
+}
+
+resource "google_dns_record_set" "private-gcr-c" {
+  project = local.project_id
+  name    = "*.${google_dns_managed_zone.private-gcr.dns_name}"
+  type    = "CNAME"
+  ttl     = 300
+
+  managed_zone = google_dns_managed_zone.private-gcr.name
+
+  rrdatas = [
+    "gcr.io."
+  ]
+}
+
+resource "google_dns_record_set" "private-gcr-a" {
+  project = local.project_id
+  name    = google_dns_managed_zone.private-gcr.dns_name
+  type    = "A"
+  ttl     = 300
+
+  managed_zone = google_dns_managed_zone.private-gcr.name
+
+  rrdatas = [
+    "199.36.153.8",
+    "199.36.153.9",
+    "199.36.153.10",
+    "199.36.153.11"
+  ]
+}
