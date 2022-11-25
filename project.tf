@@ -27,6 +27,7 @@ locals {
     "gkehub.googleapis.com",
     "mesh.googleapis.com",
   ]
+  project_id = google_project.project.project_id
 }
 
 resource "random_integer" "salt" {
@@ -48,7 +49,7 @@ resource "google_project" "project" {
 }
 
 resource "google_project_service" "project_apis" {
-  project = google_project.project.project_id
+  project = local.project_id
   count   = length(local.services)
   service = element(local.services, count.index)
 

@@ -26,14 +26,14 @@ locals {
 
 resource "google_compute_network" "vpc-main" {
   name                    = "${var.prefix}-main"
-  project                 = google_project.project.project_id
+  project                 = local.project_id
   auto_create_subnetworks = false
 }
 
 
 resource "google_compute_subnetwork" "subnet" {
   count                    = length(local.subnets)
-  project                  = google_project.project.project_id
+  project                  = local.project_id
   network                  = google_compute_network.vpc-main.self_link
   name                     = "${var.prefix}-${local.subnets[count.index]["name"]}"
   region                   = local.subnets[count.index]["region"]

@@ -15,14 +15,14 @@
  */
 
 resource "google_compute_address" "nat_gw_address" {
-  project = google_project.project.project_id
+  project = local.project_id
   name    = "${var.prefix}-nat-ext-addr-${var.region}-1"
   region  = var.region
 }
 
 resource "google_compute_router" "nat_router" {
   name    = "${var.prefix}-nat-rtr-1"
-  project = google_project.project.project_id
+  project = local.project_id
   region  = var.region
   network = google_compute_network.vpc-main.self_link
 
@@ -32,7 +32,7 @@ resource "google_compute_router" "nat_router" {
 }
 
 resource "google_compute_router_nat" "nat_gateway" {
-  project = google_project.project.project_id
+  project = local.project_id
   name    = "${var.prefix}-nat-gw-${var.region}-1"
 
   router = google_compute_router.nat_router.name

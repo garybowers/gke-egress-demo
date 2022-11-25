@@ -19,25 +19,25 @@ resource "random_id" "postfix" {
 }
 
 resource "google_service_account" "gke_service_account" {
-  project      = google_project.project.project_id
+  project      = local.project_id
   account_id   = "${var.prefix}-gke-${random_id.postfix.hex}"
   display_name = "${var.prefix}-gke-${random_id.postfix.hex}"
 }
 
 resource "google_service_account" "gke_egress_service_account" {
-  project      = google_project.project.project_id
+  project      = local.project_id
   account_id   = "${var.prefix}-gke-egress-${random_id.postfix.hex}"
   display_name = "${var.prefix}-gke-egress-${random_id.postfix.hex}"
 }
 
 resource "google_service_account" "gke_worker_service_account" {
-  project      = google_project.project.project_id
+  project      = local.project_id
   account_id   = "${var.prefix}-gke-worker-${random_id.postfix.hex}"
   display_name = "${var.prefix}-gke-worker-${random_id.postfix.hex}"
 }
 
 resource "google_container_registry" "registry" {
-  project = google_project.project.project_id
+  project = local.project_id
 }
 
 resource "google_storage_bucket_iam_member" "viewer" {
@@ -47,19 +47,19 @@ resource "google_storage_bucket_iam_member" "viewer" {
 }
 
 resource "google_project_iam_member" "service_account_log_writer" {
-  project = google_project.project.project_id
+  project = local.project_id
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "google_project_iam_member" "service_account_metric_writer" {
-  project = google_project.project.project_id
+  project = local.project_id
   role    = "roles/monitoring.metricWriter"
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "google_project_iam_member" "service_account_monitoring_viewer" {
-  project = google_project.project.project_id
+  project = local.project_id
   role    = "roles/monitoring.viewer"
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
@@ -68,7 +68,7 @@ resource "google_project_iam_member" "service_account_monitoring_viewer" {
 // Create the firewall rules to allow health checks
 
 resource "google_compute_firewall" "ingress-allow-gke-hc" {
-  project = google_project.project.project_id
+  project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
   name = "${var.prefix}-gke-node-allow-ingress-hc-${random_id.postfix.hex}"
@@ -85,7 +85,7 @@ resource "google_compute_firewall" "ingress-allow-gke-hc" {
 
 // Create the firewall rules to allow nodes to communicate with the control plane
 resource "google_compute_firewall" "egress-allow-gke-node" {
-  project = google_project.project.project_id
+  project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
   name = "${var.prefix}-gke-node-allow-egress-${random_id.postfix.hex}"
@@ -107,7 +107,7 @@ resource "google_compute_firewall" "egress-allow-gke-node" {
 }
 
 resource "google_compute_firewall" "ingress-allow-gke-node" {
-  project = google_project.project.project_id
+  project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
   name = "${var.prefix}-gke-node-allow-ingress-${random_id.postfix.hex}"
@@ -131,7 +131,7 @@ resource "google_compute_firewall" "ingress-allow-gke-node" {
 resource "google_container_cluster" "gke" {
   provider = google-beta
 
-  project  = google_project.project.project_id
+  project  = local.project_id
   name     = "${var.prefix}-${random_id.postfix.hex}"
   location = var.region
 
@@ -149,7 +149,7 @@ resource "google_container_cluster" "gke" {
   enable_legacy_abac       = false
 
   resource_labels = {
-    mesh_id = "proj-${google_project.project.number}",
+    mesh_id = "proj-${local.number}",
   }
 
   master_auth {
@@ -184,7 +184,7 @@ resource "google_container_cluster" "gke" {
   }
 
   workload_identity_config {
-    workload_pool = "${google_project.project.project_id}.svc.id.goog"
+    workload_pool = "${local.project_id}.svc.id.goog"
   }
 
   private_cluster_config {
@@ -226,7 +226,7 @@ resource "google_container_cluster" "gke" {
 }
 
 resource "google_container_node_pool" "np-ext" {
-  project     = google_project.project.project_id
+  project     = local.project_id
   name_prefix = "${var.prefix}-np-ext"
   location    = var.region
   cluster     = google_container_cluster.gke.name
@@ -288,7 +288,7 @@ resource "google_container_node_pool" "np-ext" {
 
 // Workload nodepool
 resource "google_container_node_pool" "np-int" {
-  project     = google_project.project.project_id
+  project     = local.project_id
   name_prefix = "${var.prefix}-np-wl1"
   location    = var.region
   cluster     = google_container_cluster.gke.name
