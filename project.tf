@@ -17,7 +17,6 @@
 locals {
   services = [
     "servicenetworking.googleapis.com",
-    "dns.googleapis.com",
     "iap.googleapis.com",
     "stackdriver.googleapis.com",
     "cloudresourcemanager.googleapis.com",
@@ -57,13 +56,19 @@ resource "google_project" "project" {
   auto_create_network = false
 }
 
+resource "google_project_service" "dns_api" {
+  project = local.project_id
+  service = "dns.googleapis.com"
+
+  disable_on_destroy = false
+}
+
 resource "google_project_service" "project_apis" {
   project = local.project_id
   count   = length(local.services)
   service = element(local.services, count.index)
 
-  disable_dependent_services = true
-  disable_on_destroy         = false
+  disable_on_destroy = false
 }
 
 resource "google_compute_project_metadata" "default" {
