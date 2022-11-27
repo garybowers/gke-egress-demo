@@ -204,7 +204,14 @@ resource "google_container_cluster" "gke" {
     delete = "2h"
   }
 
-  depends_on = [google_compute_firewall.egress-allow-gke-cp, google_compute_firewall.ingress-allow-gke-cp]
+  depends_on = [
+    google_compute_firewall.egress-allow-gke-cp,
+    google_compute_firewall.ingress-allow-gke-cp,
+    google_dns_record_set.private-gcr-a,
+    google_dns_record_set.private-gcr-c,
+    google_dns_record_set.private-google-apis-c,
+    google_dns_record_set.private-google-apis-a,
+  ]
 }
 
 resource "google_container_node_pool" "gateway" {

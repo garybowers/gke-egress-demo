@@ -26,6 +26,10 @@ resource "google_dns_managed_zone" "private-google-apis" {
       network_url = google_compute_network.vpc-main.id
     }
   }
+
+  depends_on = [
+    google_project_service.project_apis
+  ]
 }
 
 resource "google_dns_record_set" "private-google-apis-c" {
