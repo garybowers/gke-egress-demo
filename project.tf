@@ -23,12 +23,17 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "storage-component.googleapis.com",
     "container.googleapis.com",
+    "monitoring.googleapis.com",
     "containerregistry.googleapis.com",
     "gkehub.googleapis.com",
     "mesh.googleapis.com",
     "meshconfig.googleapis.com",
+    "meshca.googleapis.com",
     "anthos.googleapis.com",
     "containerregistry.googleapis.com",
+    "connectgateway.googleapis.com",
+    "opsconfigmonitoring.googleapis.com",
+    "serviceusage.googleapis.com",
   ]
   project_id     = google_project.project.project_id
   project_number = google_project.project.number

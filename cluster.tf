@@ -215,7 +215,7 @@ resource "google_container_node_pool" "gateway" {
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "n1-standard-2"
+    machine_type = "e2-standard-8"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"
@@ -230,6 +230,12 @@ resource "google_container_node_pool" "gateway" {
       private-pool = "true",
       type         = "egress"
     }
+
+    taint = [{
+      key    = "dedicated"
+      value  = "gateway"
+      effect = "NO_SCHEDULE"
+    }]
 
     shielded_instance_config {
       enable_secure_boot          = "true"
@@ -247,7 +253,7 @@ resource "google_container_node_pool" "gateway" {
 
   autoscaling {
     min_node_count  = 1
-    max_node_count  = 5
+    max_node_count  = 2
     location_policy = "BALANCED"
   }
 
@@ -263,9 +269,9 @@ resource "google_container_node_pool" "gateway" {
   }
 
   lifecycle {
-    create_before_destroy = true
+    create_before_destroy = false
+    ignore_changes        = [node_config.0.taint]
   }
-
 }
 
 // Workload nodepool
@@ -277,7 +283,7 @@ resource "google_container_node_pool" "np-int" {
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "n1-standard-2"
+    machine_type = "e2-standard-8"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"

@@ -26,6 +26,18 @@ resource "google_project_iam_member" "deploy_cluster_developer" {
   member  = "serviceAccount:${google_service_account.deploy_service_account.email}"
 }
 
+resource "google_project_iam_member" "deploy_asm_serviceagent" {
+  project = local.project_id
+  role    = "roles/anthosservicemesh.serviceAgent"
+  member  = "serviceAccount:${google_service_account.deploy_service_account.email}"
+}
+
+resource "google_project_iam_member" "deploy_owner" {
+  project = local.project_id
+  role    = "roles/owner"
+  member  = "serviceAccount:${google_service_account.deploy_service_account.email}"
+}
+
 resource "google_compute_instance" "deploy_instance" {
   project      = local.project_id
   name         = "${var.prefix}-deployment-${random_id.postfix.hex}"
@@ -55,6 +67,7 @@ apt update -y
 apt install -y kubectl ca-certificates google-cloud-sdk-gke-gcloud-auth-plugin jq git
 mkdir -p /tmp/deploy
 export HOME=/tmp/deploy
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
 kubectl create ns istio-system
 kubectl create ns istio-egress
