@@ -64,6 +64,71 @@ resource "google_project_iam_member" "service_account_monitoring_viewer" {
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
+resource "google_project_iam_member" "service_account_storage_object_viewer" {
+  project = local.project_id
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
+}
+
+resource "google_storage_bucket_iam_member" "viewer_w" {
+  bucket = google_container_registry.registry.id
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.gke_worker_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_log_writer_w" {
+  project = local.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.gke_worker_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_metric_writer_w" {
+  project = local.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.gke_worker_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_monitoring_viewer_w" {
+  project = local.project_id
+  role    = "roles/monitoring.viewer"
+  member  = "serviceAccount:${google_service_account.gke_worker_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_storage_object_viewer_w" {
+  project = local.project_id
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.gke_worker_service_account.email}"
+}
+
+resource "google_storage_bucket_iam_member" "viewer_e" {
+  bucket = google_container_registry.registry.id
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_log_writer_e" {
+  project = local.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_metric_writer_e" {
+  project = local.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_monitoring_viewer_e" {
+  project = local.project_id
+  role    = "roles/monitoring.viewer"
+  member  = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
+}
+
+resource "google_project_iam_member" "service_account_storage_object_viewer_e" {
+  project = local.project_id
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
+}
 // Create the firewall rules to allow nodes to communicate with the control plane
 resource "google_compute_firewall" "egress-allow-gke-cp" {
   project = local.project_id
