@@ -215,13 +215,13 @@ resource "google_container_cluster" "gke" {
 }
 
 resource "google_container_node_pool" "gateway" {
-  project  = local.project_id
-  name     = "${var.prefix}-np-gateway"
-  cluster  = google_container_cluster.gke.name
+  project = local.project_id
+  name    = "${var.prefix}-np-gateway"
+  cluster = google_container_cluster.gke.self_link
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "e2-standard-8"
+    machine_type = "n2-standard-8"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"
@@ -282,13 +282,13 @@ resource "google_container_node_pool" "gateway" {
 
 // Workload nodepool
 resource "google_container_node_pool" "np-int" {
-  project  = local.project_id
-  name     = "${var.prefix}-workload"
-  cluster  = google_container_cluster.gke.name
+  project = local.project_id
+  name    = "${var.prefix}-workload"
+  cluster = google_container_cluster.gke.self_link
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "e2-standard-8"
+    machine_type = "n2-standard-8"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"
@@ -335,6 +335,6 @@ resource "google_container_node_pool" "np-int" {
   }
 
   lifecycle {
-    create_before_destroy = false 
+    create_before_destroy = false
   }
 }
