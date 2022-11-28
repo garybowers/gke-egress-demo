@@ -71,7 +71,7 @@ export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
 kubectl create ns istio-system
 kubectl create ns istio-egress
-kubectl label ns istio-egress istio=egress istio-injection=disabled istio.io/rev=asm-managed
+kubectl label ns istio-egress istio=egress istio-injection=disabled istio.io/rev=asm-1145-8 --overwrite
 kubectl label ns istio-system istio=system
 kubectl label ns kube-system kube-system=true
 cat << 'EOY' > ./asm-custom-install.yaml
