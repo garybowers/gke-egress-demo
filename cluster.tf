@@ -123,7 +123,13 @@ resource "google_container_cluster" "gke" {
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
 
-  min_master_version = "1.24.5"
+  release_channel {
+    channel = "REGULAR"
+  }
+
+  cost_management_config {
+    enabled = true
+  }
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -195,7 +201,7 @@ resource "google_container_cluster" "gke" {
   //resource_labels = var.cluster_labels
 
   lifecycle {
-    ignore_changes = [master_auth, node_config[0]]
+    ignore_changes = [master_auth, node_config]
   }
 
   timeouts {
@@ -217,7 +223,6 @@ resource "google_container_cluster" "gke" {
 resource "google_container_node_pool" "gateway" {
   project  = local.project_id
   name     = "${var.prefix}-np-gateway"
-  location = var.region
   cluster  = google_container_cluster.gke.name
 
   node_config {
@@ -285,7 +290,6 @@ resource "google_container_node_pool" "gateway" {
 resource "google_container_node_pool" "np-int" {
   project  = local.project_id
   name     = "${var.prefix}-workload"
-  location = var.region
   cluster  = google_container_cluster.gke.name
 
   node_config {
@@ -337,7 +341,6 @@ resource "google_container_node_pool" "np-int" {
   }
 
   lifecycle {
-    create_before_destroy = true
+    create_before_destroy = false 
   }
-
 }
