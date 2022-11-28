@@ -286,7 +286,7 @@ resource "google_container_node_pool" "gateway" {
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "e2-standard-8"
+    machine_type = "e2-standard-4"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"
@@ -353,7 +353,7 @@ resource "google_container_node_pool" "np-int" {
 
   node_config {
     image_type   = "COS_CONTAINERD"
-    machine_type = "e2-standard-8"
+    machine_type = "e2-standard-4"
 
     disk_size_gb = 100
     disk_type    = "pd-balanced"

@@ -29,10 +29,7 @@ spec:
     - destination:
         host: example.com
         port:
-          #number: 80
-          #do TLS
-          number: 443
-        subset: example-com-originate-TLS
+          number: 80
       weight: 100
   exportTo:
   - 'istio-egress'
