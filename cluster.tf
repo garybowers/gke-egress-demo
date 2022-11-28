@@ -123,13 +123,7 @@ resource "google_container_cluster" "gke" {
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
 
-  release_channel {
-    channel = "REGULAR"
-  }
-
-  cost_management_config {
-    enabled = true
-  }
+  min_master_version = "1.24"
 
   remove_default_node_pool = true
   initial_node_count       = 1

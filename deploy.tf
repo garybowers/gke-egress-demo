@@ -41,7 +41,7 @@ resource "google_project_iam_member" "deploy_owner" {
 resource "google_compute_instance" "deploy_instance" {
   project      = local.project_id
   name         = "${var.prefix}-deployment-${random_id.postfix.hex}"
-  machine_type = "e2-medium"
+  machine_type = "e2-small"
   zone         = "${var.region}-b"
 
   tags = ["deployer"]
@@ -71,7 +71,7 @@ export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
 kubectl create ns istio-system
 kubectl create ns istio-egress
-kubectl label ns istio-egress istio=egress istio-injection=disabled
+kubectl label ns istio-egress istio=egress istio-injection=disabled istio.io/rev=asm-managed
 kubectl label ns istio-system istio=system
 kubectl label ns kube-system kube-system=true
 cat << 'EOY' > ./asm-custom-install.yaml
