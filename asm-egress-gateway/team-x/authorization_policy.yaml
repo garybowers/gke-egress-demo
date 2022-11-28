@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: egress-team-x-to-example-com
+  namespace: istio-egress
+spec:
+  rules:
+    - from:
+      - source:
+          namespaces:
+          - 'team-x'
+      to:
+      - operation:
+          hosts:
+            - 'example.com'
+      when:
+      - key: destination.port
+        values: ["8080"]

@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: egress-gateway
+  namespace: istio-egress
+spec:
+  selector:
+    istio: egress
+  servers:
+  - port:
+      number: 80
+      name: https
+      protocol: HTTPS
+    hosts:
+      - '*'
+    tls:
+      mode: ISTIO_MUTUAL

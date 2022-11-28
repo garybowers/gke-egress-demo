@@ -1,0 +1,20 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: egress-team-y-to-httpbin-teapot
+  namespace: istio-egress
+spec:
+  rules:
+    - from:
+      - source:
+          namespaces:
+          - 'team-y'
+      to:
+      - operation:
+          hosts:
+          - httpbin.org
+          paths: ['/status/418']
+      when:
+      - key: destination.port
+        values: ["8080"]
+

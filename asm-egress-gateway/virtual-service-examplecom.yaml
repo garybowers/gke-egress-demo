@@ -1,0 +1,39 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: example-com-through-egress-gateway
+  namespace: istio-egress
+spec:
+  hosts:
+  - example.com
+  gateways:
+  - istio-egress/egress-gateway
+  - mesh
+  http:
+  - match:
+    - gateways:
+      - mesh
+      port: 80
+    route:
+    - destination:
+        host: istio-egressgateway.istio-egress.svc.cluster.local
+        subset: target-egress-gateway-mTLS
+        port:
+          number: 80
+      weight: 100
+  - match:
+    - gateways:
+      - istio-egress/egress-gateway
+      port: 80
+    route:
+    - destination:
+        host: example.com
+        port:
+          #number: 80
+          #do TLS
+          number: 443
+        subset: example-com-originate-TLS
+      weight: 100
+  exportTo:
+  - 'istio-egress'
+  - 'team-x'
