@@ -62,6 +62,7 @@ resource "google_compute_firewall" "egress-allow-ext-gw" {
 
   target_service_accounts = [
     google_service_account.gke_egress_service_account.email,
+    google_service_account.gke_worker_service_account.email,
     google_service_account.deploy_service_account.email,
   ]
 }

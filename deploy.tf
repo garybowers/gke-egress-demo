@@ -65,8 +65,9 @@ resource "google_compute_instance" "deploy_instance" {
   metadata_startup_script = <<EOF
 apt update -y
 apt install -y kubectl ca-certificates google-cloud-sdk-gke-gcloud-auth-plugin jq git
-mkdir -p /tmp/deploy
-export HOME=/tmp/deploy
+mkdir -p /deploy
+cd /deploy
+export HOME=/deploy
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
 kubectl create ns istio-system
@@ -107,6 +108,9 @@ chmod +x asmcli
     --enable_all
 kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
   jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
+kubectl create ns bank-of-anthos
+kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 EOF
 
   depends_on = [google_container_node_pool.np-int]

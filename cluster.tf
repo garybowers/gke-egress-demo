@@ -129,50 +129,6 @@ resource "google_project_iam_member" "service_account_storage_object_viewer_e" {
   role    = "roles/storage.objectViewer"
   member  = "serviceAccount:${google_service_account.gke_egress_service_account.email}"
 }
-// Create the firewall rules to allow nodes to communicate with the control plane
-resource "google_compute_firewall" "egress-allow-gke-cp" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-egress-${random_id.postfix.hex}"
-
-  priority  = "200"
-  direction = "EGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
-  }
-
-  destination_ranges = [var.master_ipv4_cidr_block]
-  target_service_accounts = [
-    google_service_account.gke_worker_service_account.email,
-    google_service_account.gke_egress_service_account.email,
-    google_service_account.gke_service_account.email
-  ]
-}
-
-resource "google_compute_firewall" "ingress-allow-gke-cp" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-ingress-${random_id.postfix.hex}"
-
-  priority  = "200"
-  direction = "INGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
-  }
-
-  source_ranges = [var.master_ipv4_cidr_block]
-  source_service_accounts = [
-    google_service_account.gke_worker_service_account.email,
-    google_service_account.gke_egress_service_account.email,
-    google_service_account.gke_service_account.email
-  ]
-}
 
 // Create the GKE Cluster
 resource "google_container_cluster" "gke" {
