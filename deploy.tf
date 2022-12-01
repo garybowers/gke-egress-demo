@@ -69,14 +69,6 @@ mkdir -p /deploy
 cd /deploy
 export HOME=/deploy
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
-kubectl create ns istio-system
-kubectl create ns istio-egress
-kubectl create ns istio-ingress 
-kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-kubectl label ns istio-system istio=system
-kubectl label ns kube-system kube-system=true
 cat << 'EOY' > ./asm-custom-install.yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -100,18 +92,6 @@ spec:
           nodeSelector:
             cloud.google.com/gke-nodepool: "${var.prefix}-np-gateway"
 EOY
-curl -O https://storage.googleapis.com/csm-artifacts/asm/asmcli
-chmod +x asmcli
-./asmcli install --project_id ${local.project_id} --cluster_name ${google_container_cluster.gke.name} \
-                 --cluster_location ${google_container_cluster.gke.location} \
-                  --custom_overlay ./asm-custom-install.yaml \
-    --output_dir ./ \
-    --enable_all
-kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-
 cat <<EOI > ingress-gateway-spec.yaml 
 apiVersion: v1
 kind: Service
@@ -181,12 +161,62 @@ subjects:
   name: default
 EOI
 
-kubectl apply -f ingress-gateway-spec.yaml
+curl -O https://storage.googleapis.com/csm-artifacts/asm/asmcli
+chmod +x asmcli
 
 git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
+
+#### Cluster 1
+gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
+kubectl create ns istio-system
+kubectl create ns istio-egress
+kubectl create ns istio-ingress 
+
+kubectl label ns istio-system istio=system
+kubectl label ns kube-system kube-system=true
+
+./asmcli install --project_id ${local.project_id} --cluster_name ${google_container_cluster.gke.name} \
+                 --cluster_location ${google_container_cluster.gke.location} \
+                  --custom_overlay ./asm-custom-install.yaml \
+    --output_dir ./ \
+    --enable_all
+
+kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
+  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
+  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+
+kubectl apply -f ingress-gateway-spec.yaml
+
 kubectl create ns bank-of-anthos
 kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+#### Cluster 2
+gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke-2.location}
+
+kubectl create ns istio-system
+kubectl create ns istio-egress
+kubectl create ns istio-ingress 
+
+kubectl label ns istio-system istio=system
+kubectl label ns kube-system kube-system=true
+
+chmod +x asmcli
+./asmcli install --project_id ${local.project_id} --cluster_name ${google_container_cluster.gke.name} \
+                 --cluster_location ${google_container_cluster.gke.location} \
+                  --custom_overlay ./asm-custom-install.yaml \
+    --output_dir ./ \
+    --enable_all
+
+kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
+  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
+  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+
+kubectl apply -f ingress-gateway-spec.yaml
+
+kubectl create ns bank-of-anthos
 kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+
 EOF
 
   depends_on = [google_container_node_pool.np-int]

@@ -93,7 +93,6 @@ resource "google_compute_firewall" "egress-allow-gke-googleapis" {
 
   priority  = "100"
   direction = "EGRESS"
-
   allow {
     protocol = "tcp"
   }
@@ -195,4 +194,19 @@ resource "google_compute_firewall" "egress-allow-pod-services-egress" {
 
   # replace with a variable
   destination_ranges = ["10.8.0.0/14", "10.12.0.0/20"]
+}
+
+resource "google_compute_firewall" "ingress-all-10" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+  name    = "${var.prefix}-ingress-allow-all-private"
+
+  priority  = "300"
+  direction = "INGRESS"
+
+  allow {
+    protocol = "all"
+  }
+
+  source_ranges = ["10.0.0.0/8"]
 }
