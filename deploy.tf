@@ -112,6 +112,77 @@ kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n 
 kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
   jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 
+cat <<EOI > ingress-gateway-spec.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: asm-ingressgateway
+  namespace: istio-ingress
+spec:
+  type: ClusterIP
+  selector:
+    asm: ingressgateway
+  ports:
+  - port: 80
+    name: http2
+    targetPort: 8080
+  - port: 443
+    name: https
+    targetPort: 8443
+  - port: 15021
+    name: status-port
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asm-ingressgateway
+  namespace: istio-ingress
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      asm: ingressgateway
+  template:
+    metadata:
+      annotations:
+        # This is required to tell Anthos Service Mesh to inject the gateway with the
+        # required configuration.
+        inject.istio.io/templates: gateway
+      labels:
+        asm: ingressgateway
+        app: asm-ingressgateway # this is a legacy config but referenced by the mcs
+        # istio.io/rev: asm-managed-rapid # This is required only if the namespace is not labeled.
+    spec:
+      containers:
+      - name: istio-proxy
+        image: auto # The image will automatically update each time the pod starts.
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: asm-ingressgateway-sds
+  namespace: ingress-gateway 
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: asm-ingressgateway-sds
+  namespace: ingress-gateway
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: asm-ingressgateway-sds
+subjects:
+- kind: ServiceAccount
+  name: default
+EOI
+
+kubectl apply -f ingress-gateway-spec.yaml
+
 git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
 kubectl create ns bank-of-anthos
 kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
