@@ -18,8 +18,13 @@ locals {
   subnets = [
     {
       name       = "eu-1-ext"
-      region     = var.region
+      region     = "europe-west1"
       cidr_range = "10.0.0.0/22"
+    },
+    {
+      name       = "eu-1-ext"
+      region     = "europe-west6"
+      cidr_range = "10.0.4.0/22"
     },
   ]
 }
@@ -40,3 +45,10 @@ resource "google_compute_subnetwork" "subnet" {
   ip_cidr_range            = local.subnets[count.index]["cidr_range"]
   private_ip_google_access = true
 }
+
+resource "google_compute_global_address" "mesh-ext-ip" {
+  project  = local.project_id
+  provider = google-beta
+  name     = "global-ingress-ip"
+}
+

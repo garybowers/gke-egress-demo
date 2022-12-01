@@ -27,9 +27,35 @@ resource "google_gke_hub_membership" "membership" {
   }
 }
 
+resource "google_gke_hub_membership" "membership-2" {
+  project       = local.project_id
+  membership_id = "basic-2"
+  endpoint {
+    gke_cluster {
+      resource_link = "//container.googleapis.com/${google_container_cluster.gke-2.id}"
+    }
+  }
+  authority {
+    issuer = "https://container.googleapis.com/v1/${google_container_cluster.gke-2.id}"
+  }
+}
+
 resource "google_gke_hub_feature" "mesh" {
   name     = "servicemesh"
   project  = local.project_id
   location = "global"
   provider = google-beta
+}
+
+resource "google_gke_hub_feature" "mci" {
+  name     = "multiclusteringress"
+  project  = local.project_id
+  location = "global"
+  provider = google-beta
+
+  spec {
+    multiclusteringress {
+      config_membership = google_gke_hub_membership.membership.id
+    }
+  }
 }

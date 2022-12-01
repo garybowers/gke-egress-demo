@@ -72,6 +72,7 @@ export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
 kubectl create ns istio-system
 kubectl create ns istio-egress
+kubectl create ns istio-ingress 
 kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
   jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 kubectl label ns istio-system istio=system
@@ -108,8 +109,12 @@ chmod +x asmcli
     --enable_all
 kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
   jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
+  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+
 git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
 kubectl create ns bank-of-anthos
+kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 EOF
 

@@ -33,6 +33,8 @@ locals {
     "connectgateway.googleapis.com",
     "opsconfigmonitoring.googleapis.com",
     "serviceusage.googleapis.com",
+    "multiclusteringress.googleapis.com",
+    "multiclusterservicediscovery.googleapis.com",
   ]
   project_id     = google_project.project.project_id
   project_number = google_project.project.number

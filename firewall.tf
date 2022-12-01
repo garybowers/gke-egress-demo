@@ -114,7 +114,7 @@ resource "google_compute_firewall" "ingress-allow-gke-hc" {
   allow {
     protocol = "tcp"
   }
-  
+
   source_ranges = data.google_netblock_ip_ranges.health-checkers.cidr_blocks_ipv4
 }
 
@@ -194,5 +194,5 @@ resource "google_compute_firewall" "egress-allow-pod-services-egress" {
   }
 
   # replace with a variable
-  destination_ranges      = ["10.8.0.0/14","10.12.0.0/20"]
+  destination_ranges = ["10.8.0.0/14", "10.12.0.0/20"]
 }
