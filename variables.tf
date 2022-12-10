@@ -30,7 +30,5 @@ variable "region" {
   type = string
 }
 
-variable "master_ipv4_cidr_block" {
-}
-variable "master_ipv4_cidr_block_2" {
+variable "clusters" {
 }

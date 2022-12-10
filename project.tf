@@ -71,12 +71,19 @@ resource "google_project_service" "project_apis" {
   service = element(local.services, count.index)
 
   disable_on_destroy = false
+
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
 }
 
 resource "google_compute_project_metadata" "default" {
   project = local.project_id
   metadata = {
     enable-oslogin = "TRUE"
+  }
+  lifecycle {
+    ignore_changes = [metadata]
   }
 }
 

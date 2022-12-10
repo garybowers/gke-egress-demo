@@ -44,35 +44,12 @@ resource "google_compute_firewall" "egress-disallow-all" {
 }
 
 
-# Create an allow-all egress rule for gateway nodes
-resource "google_compute_firewall" "egress-allow-ext-gw" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-ext-egress-${random_id.postfix.hex}"
-
-  priority  = "1000"
-  direction = "EGRESS"
-
-  allow {
-    protocol = "all"
-  }
-
-  destination_ranges = ["0.0.0.0/0"]
-
-  target_service_accounts = [
-    google_service_account.gke_egress_service_account.email,
-    google_service_account.gke_worker_service_account.email,
-    google_service_account.deploy_service_account.email,
-  ]
-}
-
 # Create an allow to PGA egress rule for all nodes
 resource "google_compute_firewall" "egress-allow-ext-pga" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
-  name = "${var.prefix}-gke-node-allow-pga-egress-${random_id.postfix.hex}"
+  name = "${var.prefix}-allow-pga-egress-${random_id.postfix.hex}"
 
   priority  = "300"
   direction = "EGRESS"
@@ -85,11 +62,11 @@ resource "google_compute_firewall" "egress-allow-ext-pga" {
 }
 
 #Create the firewall rule to allow egress to google apis
-resource "google_compute_firewall" "egress-allow-gke-googleapis" {
+resource "google_compute_firewall" "egress-allow-googleapis" {
   project = local.project_id
   network = google_compute_network.vpc-main.self_link
 
-  name = "${var.prefix}-gke-node-allow-engress-googleapis-${random_id.postfix.hex}"
+  name = "${var.prefix}-allow-engress-googleapis-${random_id.postfix.hex}"
 
   priority  = "100"
   direction = "EGRESS"
@@ -132,51 +109,6 @@ resource "google_compute_firewall" "ingress-allow-iap" {
   source_ranges = data.google_netblock_ip_ranges.iap.cidr_blocks_ipv4
 }
 
-// Create the firewall rules to allow nodes to communicate with the control plane
-resource "google_compute_firewall" "egress-allow-gke-cp" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-egress-${random_id.postfix.hex}"
-
-  priority  = "200"
-  direction = "EGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
-  }
-
-  destination_ranges = [var.master_ipv4_cidr_block]
-  target_service_accounts = [
-    google_service_account.gke_worker_service_account.email,
-    google_service_account.gke_egress_service_account.email,
-    google_service_account.gke_service_account.email
-  ]
-}
-
-# Create the firewall rules to allow control plane to communicate with nodes, pods
-resource "google_compute_firewall" "ingress-allow-gke-cp" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-
-  name = "${var.prefix}-gke-node-allow-ingress-${random_id.postfix.hex}"
-
-  priority  = "200"
-  direction = "INGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "9443", "10250", "15017", "6443", "10255"]
-  }
-
-  source_ranges = [var.master_ipv4_cidr_block]
-  source_service_accounts = [
-    google_service_account.gke_worker_service_account.email,
-    google_service_account.gke_egress_service_account.email,
-    google_service_account.gke_service_account.email
-  ]
-}
 
 // Create the firewall rules to allow pods to services communication (egress)
 resource "google_compute_firewall" "egress-allow-pod-services-egress" {
@@ -194,19 +126,4 @@ resource "google_compute_firewall" "egress-allow-pod-services-egress" {
 
   # replace with a variable
   destination_ranges = ["10.8.0.0/14", "10.12.0.0/20"]
-}
-
-resource "google_compute_firewall" "ingress-all-10" {
-  project = local.project_id
-  network = google_compute_network.vpc-main.self_link
-  name    = "${var.prefix}-ingress-allow-all-private"
-
-  priority  = "300"
-  direction = "INGRESS"
-
-  allow {
-    protocol = "all"
-  }
-
-  source_ranges = ["10.0.0.0/8"]
 }

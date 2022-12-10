@@ -15,28 +15,16 @@
  */
 
 resource "google_gke_hub_membership" "membership" {
+  count         = length(var.clusters)
   project       = local.project_id
-  membership_id = "basic"
+  membership_id = module.cluster[count.index].name
   endpoint {
     gke_cluster {
-      resource_link = "//container.googleapis.com/${google_container_cluster.gke.id}"
+      resource_link = "//container.googleapis.com/${module.cluster[count.index].id}"
     }
   }
   authority {
-    issuer = "https://container.googleapis.com/v1/${google_container_cluster.gke.id}"
-  }
-}
-
-resource "google_gke_hub_membership" "membership-2" {
-  project       = local.project_id
-  membership_id = "basic-2"
-  endpoint {
-    gke_cluster {
-      resource_link = "//container.googleapis.com/${google_container_cluster.gke-2.id}"
-    }
-  }
-  authority {
-    issuer = "https://container.googleapis.com/v1/${google_container_cluster.gke-2.id}"
+    issuer = "https://container.googleapis.com/v1/${module.cluster[count.index].id}"
   }
 }
 
@@ -55,7 +43,7 @@ resource "google_gke_hub_feature" "mci" {
 
   spec {
     multiclusteringress {
-      config_membership = google_gke_hub_membership.membership.id
+      config_membership = google_gke_hub_membership.membership[0].id
     }
   }
 }

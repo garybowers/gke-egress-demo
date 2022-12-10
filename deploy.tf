@@ -20,6 +20,26 @@ resource "google_service_account" "deploy_service_account" {
   display_name = "${var.prefix}-deploy-${random_id.postfix.hex}"
 }
 
+resource "google_compute_firewall" "egress-allow-ext-gw" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-deploy-allow-ext-egress-${random_id.postfix.hex}"
+
+  priority  = "1000"
+  direction = "EGRESS"
+
+  allow {
+    protocol = "all"
+  }
+
+  destination_ranges = ["0.0.0.0/0"]
+
+  target_service_accounts = [
+    google_service_account.deploy_service_account.email,
+  ]
+}
+
 resource "google_project_iam_member" "deploy_cluster_developer" {
   project = local.project_id
   role    = "roles/container.developer"
@@ -65,10 +85,12 @@ resource "google_compute_instance" "deploy_instance" {
   metadata_startup_script = <<EOF
 apt update -y
 apt install -y kubectl ca-certificates google-cloud-sdk-gke-gcloud-auth-plugin jq git
-mkdir -p /deploy
-cd /deploy
+
+git clone https://github.com/garybowers/gke-egress-demo.git /deploy
+
 export HOME=/deploy
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
 cat << 'EOY' > ./asm-custom-install.yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -90,7 +112,7 @@ spec:
             operator: "Equal"
             value: "gateway"
           nodeSelector:
-            cloud.google.com/gke-nodepool: "${var.prefix}-np-gateway"
+            cloud.google.com/gke-nodepool: "${var.prefix}-gateway"
 EOY
 cat <<EOI > ingress-gateway-spec.yaml 
 apiVersion: v1
@@ -166,58 +188,28 @@ chmod +x asmcli
 
 git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
 
-#### Cluster 1
-gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke.location}
-kubectl create ns istio-system
-kubectl create ns istio-egress
-kubectl create ns istio-ingress 
+export PROJECT=${local.project_id}
 
-kubectl label ns istio-system istio=system
-kubectl label ns kube-system kube-system=true
+for cluster in $(gcloud container clusters list --format='csv[no-heading](name,zone, endpoint)' --project="$PROJECT" )
+do
+    echo $cluster
 
-./asmcli install --project_id ${local.project_id} --cluster_name ${google_container_cluster.gke.name} \
-                 --cluster_location ${google_container_cluster.gke.location} \
-                  --custom_overlay ./asm-custom-install.yaml \
-    --output_dir ./ \
-    --enable_all
+    clusterName=$(echo $cluster | cut -d "," -f 1)
+    clusterZone=$(echo $cluster | cut -d "," -f 2)
+    clusterEndpoint=$(echo $cluster | cut -d "," -f 3)
 
-kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+    echo $clusterName
+    echo $clusterZone
+    echo $clusterEndpoint
+    
+    bash /deploy/deploy/asm/install.sh $PROJECT $clusterName $clusterZone
+    gcloud container clusters get-credentials $clusterName --region="$clusterZone" --project="$PROJECT"
 
-kubectl apply -f ingress-gateway-spec.yaml
+    kubectl create ns bank-of-anthos
+    kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 
-kubectl create ns bank-of-anthos
-kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-#### Cluster 2
-gcloud container clusters get-credentials ${google_container_cluster.gke.name} --region=${google_container_cluster.gke-2.location}
-
-kubectl create ns istio-system
-kubectl create ns istio-egress
-kubectl create ns istio-ingress 
-
-kubectl label ns istio-system istio=system
-kubectl label ns kube-system kube-system=true
-
-chmod +x asmcli
-./asmcli install --project_id ${local.project_id} --cluster_name ${google_container_cluster.gke.name} \
-                 --cluster_location ${google_container_cluster.gke.location} \
-                  --custom_overlay ./asm-custom-install.yaml \
-    --output_dir ./ \
-    --enable_all
-
-kubectl label ns istio-egress istio=egress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-kubectl label ns istio-ingress istio=ingress istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o \
-  jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-
-kubectl apply -f ingress-gateway-spec.yaml
-
-kubectl create ns bank-of-anthos
-kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
+done
 
 EOF
 
-  depends_on = [google_container_node_pool.np-int]
 }
