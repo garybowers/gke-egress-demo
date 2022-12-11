@@ -42,6 +42,21 @@ resource "google_compute_firewall" "egress-disallow-all" {
 
   destination_ranges = ["0.0.0.0/0"]
 }
+resource "google_compute_firewall" "egress-allow-all" {
+  project = local.project_id
+  network = google_compute_network.vpc-main.self_link
+
+  name = "${var.prefix}-allow-egress-${random_id.postfix.hex}"
+
+  priority  = "100"
+  direction = "EGRESS"
+
+  allow {
+    protocol = "all"
+  }
+
+  destination_ranges = ["0.0.0.0/0"]
+}
 
 
 # Create an allow to PGA egress rule for all nodes

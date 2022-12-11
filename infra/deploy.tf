@@ -91,6 +91,8 @@ git clone https://github.com/garybowers/gke-egress-demo.git /deploy
 export HOME=/deploy
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
+cd /deploy
+
 cat << 'EOY' > ./asm-custom-install.yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
@@ -190,25 +192,11 @@ git clone https://github.com/GoogleCloudPlatform/bank-of-anthos.git
 
 export PROJECT=${local.project_id}
 
-for cluster in $(gcloud container clusters list --format='csv[no-heading](name,zone, endpoint)' --project="$PROJECT" )
-do
-    echo $cluster
-
-    clusterName=$(echo $cluster | cut -d "," -f 1)
-    clusterZone=$(echo $cluster | cut -d "," -f 2)
-    clusterEndpoint=$(echo $cluster | cut -d "," -f 3)
-
-    echo $clusterName
-    echo $clusterZone
-    echo $clusterEndpoint
     
-    bash /deploy/deploy/asm/install.sh $PROJECT $clusterName $clusterZone
-    gcloud container clusters get-credentials $clusterName --region="$clusterZone" --project="$PROJECT"
+    bash /deploy/deploy/asm/install.sh $PROJECT
 
-    kubectl create ns bank-of-anthos
-    kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
-
-done
+    #kubectl create ns bank-of-anthos
+    #kubectl label ns bank-of-anthos istio.io/rev=$(kubectl get deploy -n istio-system -l app=istiod -o jsonpath={.items[*].metadata.labels.'istio\.io\/rev'}'{"\n"}') --overwrite
 
 EOF
 
