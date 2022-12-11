@@ -26,8 +26,8 @@ do
     mkdir -p $clusterName/$clusterZone
 
     ./asmcli install --project_id ${PROJECT} \
-                     --cluster_name ${CLUSTER} \
-                     --cluster_location ${REGION} \
+                     --cluster_name clusterName \
+                     --cluster_location clusterZone \
                      --output_dir ./$clusterName/$clusterZone \
                      --enable_all
                      #--custom_overlay ./asm-custom-install.yaml \
